@@ -10,6 +10,7 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "@google/generative-ai": "^0.24.1",
     "@langchain/google-genai": "^2.2.0",
     "@langchain/pinecone": "^1.0.3",
     "@langchain/textsplitters": "^1.0.1",
