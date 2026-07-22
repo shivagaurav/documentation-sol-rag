@@ -63,6 +63,117 @@ const reactDocsUrls = [
     "https://react.dev/reference/rsc/server-actions"
 ];
 
+// NEW: Curated Next.js "Golden" Documentation (High Signal, Low Noise)
+const nextJsDocsUrls = [
+  "https://nextjs.org/docs",
+  "https://nextjs.org/docs/app/getting-started",
+  "https://nextjs.org/docs/app/getting-started/installation",
+  "https://nextjs.org/docs/app/getting-started/project-structure",
+  "https://nextjs.org/docs/app/getting-started/react-essentials",
+  "https://nextjs.org/docs/app/getting-started/images-and-images",
+  "https://nextjs.org/docs/app/getting-started/css-and-styling",
+  "https://nextjs.org/docs/app/building-your-application/routing",
+  "https://nextjs.org/docs/app/building-your-application/routing/defining-routes",
+  "https://nextjs.org/docs/app/building-your-application/routing/pages-and-layouts",
+  "https://nextjs.org/docs/app/building-your-application/routing/linking-and-navigating",
+  "https://nextjs.org/docs/app/building-your-application/routing/error-handling",
+  "https://nextjs.org/docs/app/building-your-application/routing/loading-ui-and-streaming",
+  "https://nextjs.org/docs/app/building-your-application/routing/redirecting",
+  "https://nextjs.org/docs/app/building-your-application/routing/route-groups",
+  "https://nextjs.org/docs/app/building-your-application/routing/dynamic-routes",
+  "https://nextjs.org/docs/app/building-your-application/routing/parallel-routes",
+  "https://nextjs.org/docs/app/building-your-application/routing/intercepting-routes",
+  "https://nextjs.org/docs/app/building-your-application/routing/route-handlers",
+  "https://nextjs.org/docs/app/building-your-application/routing/middleware",
+  "https://nextjs.org/docs/app/building-your-application/routing/internationalization",
+  "https://nextjs.org/docs/app/building-your-application/rendering",
+  "https://nextjs.org/docs/app/building-your-application/rendering/server-components",
+  "https://nextjs.org/docs/app/building-your-application/rendering/client-components",
+  "https://nextjs.org/docs/app/building-your-application/rendering/composition-patterns",
+  "https://nextjs.org/docs/app/building-your-application/rendering/partial-prerendering",
+  "https://nextjs.org/docs/app/building-your-application/rendering/edge-and-nodejs-runtimes",
+  "https://nextjs.org/docs/app/building-your-application/data-fetching",
+  "https://nextjs.org/docs/app/building-your-application/data-fetching/fetching-caching-and-revalidating",
+  "https://nextjs.org/docs/app/building-your-application/data-fetching/server-actions-and-mutations",
+  "https://nextjs.org/docs/app/building-your-application/data-fetching/patterns-and-best-practices",
+  "https://nextjs.org/docs/app/building-your-application/caching",
+  "https://nextjs.org/docs/app/building-your-application/styling",
+  "https://nextjs.org/docs/app/building-your-application/styling/css-modules",
+  "https://nextjs.org/docs/app/building-your-application/styling/tailwind-css",
+  "https://nextjs.org/docs/app/building-your-application/styling/css-in-js",
+  "https://nextjs.org/docs/app/building-your-application/optimizing",
+  "https://nextjs.org/docs/app/building-your-application/optimizing/images",
+  "https://nextjs.org/docs/app/building-your-application/optimizing/videos",
+  "https://nextjs.org/docs/app/building-your-application/optimizing/fonts",
+  "https://nextjs.org/docs/app/building-your-application/optimizing/scripts",
+  "https://nextjs.org/docs/app/building-your-application/optimizing/metadata",
+  "https://nextjs.org/docs/app/building-your-application/optimizing/static-assets",
+  "https://nextjs.org/docs/app/building-your-application/optimizing/lazy-loading",
+  "https://nextjs.org/docs/app/building-your-application/optimizing/analytics",
+  "https://nextjs.org/docs/app/building-your-application/optimizing/instrumentation",
+  "https://nextjs.org/docs/app/building-your-application/optimizing/open-telemetry",
+  "https://nextjs.org/docs/app/building-your-application/optimizing/package-bundling",
+  "https://nextjs.org/docs/app/building-your-application/optimizing/memory-usage",
+  "https://nextjs.org/docs/app/building-your-application/configuring/typescript",
+  "https://nextjs.org/docs/app/building-your-application/configuring/eslint",
+  "https://nextjs.org/docs/app/building-your-application/configuring/environment-variables",
+  "https://nextjs.org/docs/app/building-your-application/configuring/absolute-imports-and-module-aliases",
+  "https://nextjs.org/docs/app/building-your-application/configuring/mdx",
+  "https://nextjs.org/docs/app/building-your-application/configuring/src-directory",
+  "https://nextjs.org/docs/app/building-your-application/configuring/draft-mode",
+  "https://nextjs.org/docs/app/building-your-application/configuring/content-security-policy",
+  "https://nextjs.org/docs/app/building-your-application/testing",
+  "https://nextjs.org/docs/app/building-your-application/testing/vitest",
+  "https://nextjs.org/docs/app/building-your-application/testing/jest",
+  "https://nextjs.org/docs/app/building-your-application/testing/playwright",
+  "https://nextjs.org/docs/app/building-your-application/testing/cypress",
+  "https://nextjs.org/docs/app/building-your-application/deploying",
+  "https://nextjs.org/docs/app/building-your-application/deploying/production-checklist",
+  "https://nextjs.org/docs/app/building-your-application/deploying/static-exports",
+  "https://nextjs.org/docs/app/building-your-application/upgrading/app-router-migration",
+  "https://nextjs.org/docs/app/api-reference/file-conventions/layout",
+  "https://nextjs.org/docs/app/api-reference/file-conventions/page",
+  "https://nextjs.org/docs/app/api-reference/file-conventions/loading",
+  "https://nextjs.org/docs/app/api-reference/file-conventions/not-found",
+  "https://nextjs.org/docs/app/api-reference/file-conventions/error",
+  "https://nextjs.org/docs/app/api-reference/file-conventions/global-error",
+  "https://nextjs.org/docs/app/api-reference/file-conventions/route",
+  "https://nextjs.org/docs/app/api-reference/file-conventions/template",
+  "https://nextjs.org/docs/app/api-reference/file-conventions/default",
+  "https://nextjs.org/docs/app/api-reference/file-conventions/middleware",
+  "https://nextjs.org/docs/app/api-reference/file-conventions/route-segment-config",
+  "https://nextjs.org/docs/app/api-reference/file-conventions/metadata",
+  "https://nextjs.org/docs/app/api-reference/file-conventions/metadata/sitemap",
+  "https://nextjs.org/docs/app/api-reference/file-conventions/metadata/robots",
+  "https://nextjs.org/docs/app/api-reference/file-conventions/metadata/manifest",
+  "https://nextjs.org/docs/app/api-reference/file-conventions/metadata/opengraph-image",
+  "https://nextjs.org/docs/app/api-reference/components/image",
+  "https://nextjs.org/docs/app/api-reference/components/link",
+  "https://nextjs.org/docs/app/api-reference/components/script",
+  "https://nextjs.org/docs/app/api-reference/components/font",
+  "https://nextjs.org/docs/app/api-reference/functions/cookies",
+  "https://nextjs.org/docs/app/api-reference/functions/headers",
+  "https://nextjs.org/docs/app/api-reference/functions/fetch",
+  "https://nextjs.org/docs/app/api-reference/functions/image-response",
+  "https://nextjs.org/docs/app/api-reference/functions/next-response",
+  "https://nextjs.org/docs/app/api-reference/functions/not-found",
+  "https://nextjs.org/docs/app/api-reference/functions/redirect",
+  "https://nextjs.org/docs/app/api-reference/functions/revalidatePath",
+  "https://nextjs.org/docs/app/api-reference/functions/revalidateTag",
+  "https://nextjs.org/docs/app/api-reference/functions/use-params",
+  "https://nextjs.org/docs/app/api-reference/functions/use-pathname",
+  "https://nextjs.org/docs/app/api-reference/functions/use-router",
+  "https://nextjs.org/docs/app/api-reference/functions/use-search-params",
+  "https://nextjs.org/docs/app/api-reference/next-config-js"
+]
+
+// NEW: Placeholder for Phase 3!
+const sitecoreDocsUrls = [
+    // We will populate this with Sitecore 10.4 XM / JSS links next
+];
+
+// Deleted the getNextJsUrls() sitemap function completely from here
+
 // Removed the unused visionModel parameter
 async function scrapeSinglePage(url) {
     console.log(`Fetching: ${url}`);
@@ -142,32 +253,6 @@ async function scrapeSinglePage(url) {
     }
 }
 
-// Helper function to dynamically pull Next.js documentation URLs
-async function getNextJsUrls() {
-    console.log("🗺️ Fetching Next.js sitemap...");
-    try {
-        const response = await fetch("https://nextjs.org/sitemap.xml");
-        const xml = await response.text();
-        const $ = cheerio.load(xml, { xmlMode: true });
-        const nextUrls = [];
-
-        $('loc').each((i, el) => {
-            const url = $(el).text();
-            // STRICT FILTER: Only grab actual documentation pages
-            if (url.startsWith("https://nextjs.org/docs")) {
-                nextUrls.push(url);
-            }
-        });
-        console.log(`✅ Found ${nextUrls.length} Next.js documentation pages.`);
-        
-        // Removed the testing limit! We are going for the full enterprise load now.
-        return nextUrls; 
-    } catch (error) {
-        console.error("❌ Failed to fetch Next.js sitemap:", error.message);
-        return [];
-    }
-}
-
 async function buildKnowledgeBase() {
     console.log(`\n🚀 Initiating Cloud Ingestion Pipeline...\n`);
     
@@ -180,8 +265,6 @@ async function buildKnowledgeBase() {
         { model: "gemini-embedding-001" },
         { apiVersion: "v1" } 
     );
-    
-    const nextJsUrls = await getNextJsUrls();
     
     console.log("\n🔪 Scraping and Chunking documentation with Metadata and Multimodal support...");
     const textSplitter = new RecursiveCharacterTextSplitter({ chunkSize: 1000, chunkOverlap: 200 });
@@ -207,7 +290,11 @@ async function buildKnowledgeBase() {
     await processFramework(reactDocsUrls, "react");
 
     console.log("Processing Next.js Docs...");
-    await processFramework(nextJsUrls, "nextjs");
+    await processFramework(nextJsDocsUrls, "nextjs"); // Using our curated array!
+    
+    // Ready for the final phase!
+    // console.log("Processing Sitecore Docs...");
+    // await processFramework(sitecoreDocsUrls, "sitecore"); 
 
     console.log(`✅ Success! Generated ${allSplitChunks.length} fully tagged semantic chunks.\n`);
 
