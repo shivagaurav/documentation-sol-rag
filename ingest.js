@@ -1,12 +1,9 @@
 require("dotenv").config();
 const cheerio = require("cheerio");
 const { RecursiveCharacterTextSplitter } = require("@langchain/textsplitters");
-const { GoogleGenerativeAIEmbeddings } = require("@langchain/google-genai");
 const { Pinecone } = require("@pinecone-database/pinecone");
-const { PineconeStore } = require("@langchain/pinecone");
-const { TaskType, HarmCategory, HarmBlockThreshold } = require("@google/generative-ai");
+const { GoogleGenerativeAI } = require("@google/generative-ai");
 
-// The highly curated list of foundational React concepts for our Oracle PoC
 const reactDocsUrls = [
     // 1. Daily Driver Hooks
     "https://react.dev/reference/react/useState",
@@ -20,175 +17,255 @@ const reactDocsUrls = [
     // 3. Concurrency & Priority
     "https://react.dev/reference/react/useTransition",
     "https://react.dev/reference/react/useDeferredValue",
-    // "https://react.dev/reference/react/startTransition",
-    // "https://react.dev/blog/2022/03/29/react-v18#what-is-concurrent-react",
+    "https://react.dev/reference/react/startTransition",
+    "https://react.dev/blog/2022/03/29/react-v18#what-is-concurrent-react",
     
     // 4. Other Core Concepts
-    // "https://react.dev/reference/react/useRef",
-    // "https://react.dev/reference/react/useReducer",
-    // "https://react.dev/reference/react/useLayoutEffect",
-    // "https://react.dev/learn/reusing-logic-with-custom-hooks",
+    "https://react.dev/reference/react/useRef",
+    "https://react.dev/reference/react/useReducer",
+    "https://react.dev/reference/react/useLayoutEffect",
+    "https://react.dev/learn/reusing-logic-with-custom-hooks",
     
-    // // 5. Server-Side Rendering (SSR) & RSC
-    // "https://react.dev/reference/rsc/server-components",
-    // "https://react.dev/reference/rsc/use-client",
-    // "https://react.dev/reference/rsc/use-server",
-    // "https://react.dev/reference/react/Suspense",
-    // "https://react.dev/reference/react-dom/client/hydrateRoot",
-    // "https://react.dev/reference/react-dom/server/renderToPipeableStream",
+    // 5. Server-Side Rendering (SSR) & RSC
+    "https://react.dev/reference/rsc/server-components",
+    "https://react.dev/reference/rsc/use-client",
+    "https://react.dev/reference/rsc/use-server",
+    "https://react.dev/reference/react/Suspense",
+    "https://react.dev/reference/react-dom/client/hydrateRoot",
+    "https://react.dev/reference/react-dom/server/renderToPipeableStream",
     
-    // // 6. Advanced Architecture & Error Handling
-    // "https://legacy.reactjs.org/docs/higher-order-components.html",
-    // "https://react.dev/reference/react/forwardRef",
-    // "https://react.dev/reference/react-dom/createPortal",
-    // "https://react.dev/reference/react/Component#catching-rendering-errors-with-an-error-boundary",
+    // 6. Advanced Architecture & Error Handling
+    "https://legacy.reactjs.org/docs/higher-order-components.html",
+    "https://react.dev/reference/react/forwardRef",
+    "https://react.dev/reference/react-dom/createPortal",
+    "https://react.dev/reference/react/Component#catching-rendering-errors-with-an-error-boundary",
     
-    // // 7. Optimization Tools
-    // "https://react.dev/reference/react/memo",
-    // "https://react.dev/reference/react/StrictMode",
-    // "https://react.dev/reference/react/Profiler",
+    // 7. Optimization Tools
+    "https://react.dev/reference/react/memo",
+    "https://react.dev/reference/react/StrictMode",
+    "https://react.dev/reference/react/Profiler",
     
-    // // 8. Niche / Library-Author Hooks
-    // "https://react.dev/reference/react/useSyncExternalStore",
-    // "https://react.dev/reference/react/useId",
-    // "https://react.dev/reference/react/useInsertionEffect",
+    // 8. Niche / Library-Author Hooks
+    "https://react.dev/reference/react/useSyncExternalStore",
+    "https://react.dev/reference/react/useId",
+    "https://react.dev/reference/react/useInsertionEffect",
     
-    // // 9. Server Actions & Forms
-    // "https://react.dev/reference/react-dom/components/form",
-    // "https://react.dev/reference/react/useActionState",
-    // "https://react.dev/reference/react-dom/hooks/useFormStatus",
-    // "https://react.dev/reference/react/useOptimistic",
+    // 9. Server Actions & Forms
+    "https://react.dev/reference/react-dom/components/form",
+    "https://react.dev/reference/react/useActionState",
+    "https://react.dev/reference/react-dom/hooks/useFormStatus",
+    "https://react.dev/reference/react/useOptimistic",
     
-    // // 10. RSC Data Fetching & Caching
-    // "https://react.dev/reference/react/use",
-    // "https://react.dev/reference/react/cache",
-    // "https://react.dev/reference/react/experimental_taintObjectReference",
-    // "https://react.dev/reference/rsc/server-actions"
+    // 10. RSC Data Fetching & Caching
+    "https://react.dev/reference/react/use",
+    "https://react.dev/reference/react/cache",
+    "https://react.dev/reference/react/experimental_taintObjectReference",
+    "https://react.dev/reference/rsc/server-actions"
 ];
 
-// Helper function to fetch and clean a single page
+// Removed the unused visionModel parameter
 async function scrapeSinglePage(url) {
     console.log(`Fetching: ${url}`);
     try {
         const response = await fetch(url);
-        
-        if (!response.ok) {
-            throw new Error(`HTTP error! status: ${response.status}`);
-        }
-        
+        if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
         const html = await response.text();
         const $ = cheerio.load(html);
-        
-        // Strip out the non-documentation junk (navs, footers, scripts, sidebars)
+
+        // --- PILLAR 2: MULTIMODAL DIAGRAM EXTRACTION ---
+        const imageUrls = [];
+        $('img').each((i, el) => {
+            const src = $(el).attr('src');
+            // STRICT FILTER: Ignore SVGs and data URIs to save Vision API quota!
+            if (src && !src.startsWith('data:') && !src.toLowerCase().endsWith('.svg')) {
+                // Convert relative paths to absolute URLs
+                const absoluteUrl = new URL(src, url).href;
+                imageUrls.push(absoluteUrl);
+            }
+        });
+
+        // Limit to 2 images per page to protect your free tier rate limits
+        const targetImages = imageUrls.slice(0, 2);
+        let imageDescriptions = "";
+
+        for (const imgUrl of targetImages) {
+            console.log(`   👁️  Analyzing diagram using Local Vision AI: ${imgUrl}`);
+            try {
+                const imgResp = await fetch(imgUrl);
+                if (!imgResp.ok) continue;
+                
+                const arrayBuffer = await imgResp.arrayBuffer();
+                const base64 = Buffer.from(arrayBuffer).toString('base64');
+
+                const prompt = "You are an expert software architect. Analyze this image. If it is an architecture diagram, describe the nodes, data flows, and technical details. If it is a UI mockup, describe the components. Be highly technical.";
+                
+                // ENTERPRISE PATTERN: Hybrid Architecture! 
+                // We route the heavy image processing to our LOCAL machine via Ollama.
+                // NO RATE LIMITS. NO EXPONENTIAL BACKOFF NEEDED.
+                const result = await fetch("http://localhost:11434/api/chat", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({
+                        model: "minicpm-v", // Swapped to a highly efficient, OCR-focused Small Language Model
+                        messages: [
+                            {
+                                role: "user",
+                                content: prompt,
+                                images: [base64] // Ollama accepts raw base64 arrays
+                            }
+                        ],
+                        stream: false
+                    })
+                });
+                
+                if (!result.ok) throw new Error("Local Ollama server not responding. Is it running?");
+                
+                const data = await result.json();
+                const description = data.message.content;
+                
+                imageDescriptions += `\n\n--- ARCHITECTURE DIAGRAM / IMAGE ---\nSource URL: ${imgUrl}\nTechnical Description: ${description}\n----------------------------------\n\n`;
+                
+            } catch (err) {
+                console.warn(`   ⚠️ Failed to analyze image ${imgUrl}: ${err.message}`);
+            }
+        }
+        // -----------------------------------------------
+
         $('script, style, nav, footer, header, aside, .toc').remove();
+        const cleanText = $('body').text().replace(/\s+/g, ' ').trim();
         
-        // Extract the clean text and normalize whitespace
-        return $('body').text().replace(/\s+/g, ' ').trim();
+        // Return both the raw text AND the highly detailed image descriptions
+        return cleanText + imageDescriptions;
     } catch (error) {
         console.error(`❌ Failed to scrape ${url}:`, error.message);
-        return ""; // Return empty string so the pipeline doesn't crash
+        return ""; 
+    }
+}
+
+// Helper function to dynamically pull Next.js documentation URLs
+async function getNextJsUrls() {
+    console.log("🗺️ Fetching Next.js sitemap...");
+    try {
+        const response = await fetch("https://nextjs.org/sitemap.xml");
+        const xml = await response.text();
+        const $ = cheerio.load(xml, { xmlMode: true });
+        const nextUrls = [];
+
+        $('loc').each((i, el) => {
+            const url = $(el).text();
+            // STRICT FILTER: Only grab actual documentation pages
+            if (url.startsWith("https://nextjs.org/docs")) {
+                nextUrls.push(url);
+            }
+        });
+        console.log(`✅ Found ${nextUrls.length} Next.js documentation pages.`);
+        
+        // Removed the testing limit! We are going for the full enterprise load now.
+        return nextUrls; 
+    } catch (error) {
+        console.error("❌ Failed to fetch Next.js sitemap:", error.message);
+        return [];
     }
 }
 
 async function buildKnowledgeBase() {
-    console.log(`\n🚀 Initiating ingestion pipeline for ${reactDocsUrls.length} pages...\n`);
+    console.log(`\n🚀 Initiating Cloud Ingestion Pipeline...\n`);
     
-    let massiveCombinedText = "";
-    let successfulScrapes = 0;
+    // Initialize Native Google AI Client for Embeddings only
+    console.log("🧠 Initializing Native Google AI Client (Embeddings)...");
+    const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
+    
+    // Embedding Model for Vector Search
+    const embedModel = genAI.getGenerativeModel(
+        { model: "gemini-embedding-001" },
+        { apiVersion: "v1" } 
+    );
+    
+    const nextJsUrls = await getNextJsUrls();
+    
+    console.log("\n🔪 Scraping and Chunking documentation with Metadata and Multimodal support...");
+    const textSplitter = new RecursiveCharacterTextSplitter({ chunkSize: 1000, chunkOverlap: 200 });
+    let allSplitChunks = [];
 
-    // Loop through all URLs synchronously to respect rate limits
-    for (const url of reactDocsUrls) {
-        const pageText = await scrapeSinglePage(url);
-        
-        if (pageText) {
-            // Add hard boundaries between pages to prevent context bleeding
-            massiveCombinedText += pageText + "\n\n\n---END_OF_DOCUMENT---\n\n\n"; 
-            successfulScrapes++;
+    // Process a specific framework's URLs and tag them with metadata
+    async function processFramework(urls, frameworkName) {
+        for (const url of urls) {
+            // No longer passing visionModel here
+            const pageText = await scrapeSinglePage(url);
+            if (pageText) {
+                const chunks = await textSplitter.createDocuments(
+                    [pageText], 
+                    [{ framework: frameworkName, sourceUrl: url }] 
+                );
+                allSplitChunks.push(...chunks);
+            }
+            await new Promise(resolve => setTimeout(resolve, 500));
         }
-        
-        // Pause for 1 second between requests to prevent IP blocking
-        await new Promise(resolve => setTimeout(resolve, 1000));
     }
 
-    console.log(`\n✅ Finished crawling. Successfully scraped ${successfulScrapes}/${reactDocsUrls.length} pages.`);
-    console.log(`📊 Total extracted text volume: ${massiveCombinedText.length} characters.`);
-    console.log("\n🔪 Sending massive text volume to the intelligent chunker...");
+    console.log("Processing React Docs...");
+    await processFramework(reactDocsUrls, "react");
 
-    // Initialize the LangChain recursive splitter
-    const textSplitter = new RecursiveCharacterTextSplitter({
-        chunkSize: 1000,      // Max characters per chunk
-        chunkOverlap: 200,    // 200 characters overlap to preserve context across chunks
-    });
+    console.log("Processing Next.js Docs...");
+    await processFramework(nextJsUrls, "nextjs");
 
-    // Create the LangChain document chunks
-    const splitChunks = await textSplitter.createDocuments([massiveCombinedText]);
+    console.log(`✅ Success! Generated ${allSplitChunks.length} fully tagged semantic chunks.\n`);
 
-    console.log(`✅ Success! The React documentation was split into ${splitChunks.length} semantic chunks.\n`);
-    
-    // Peek at the data to verify it worked
-    if (splitChunks.length > 0) {
-        console.log("--- PEEK: CHUNK 10 ---");
-        console.log(splitChunks[10].pageContent.substring(0, 300) + "...\n");
-    }
-
-    // 3. Initialize Pinecone Client
     console.log("☁️ Connecting to Pinecone Cloud...");
     const pinecone = new Pinecone({ apiKey: process.env.PINECONE_API_KEY });
     const pineconeIndex = pinecone.Index(process.env.PINECONE_INDEX_NAME);
 
-    // 4. Initialize Google Embeddings (Dense Vector Math)
-    // const embeddings = new GoogleGenerativeAIEmbeddings({
-    //     apiKey: process.env.GEMINI_API_KEY,
-    //     modelName: "text-embedding-004", 
-    //     taskType: TaskType.RETRIEVAL_DOCUMENT, 
-    // });
-
-    const embeddings = new GoogleGenerativeAIEmbeddings({
-        apiKey: process.env.GEMINI_API_KEY,
-        modelName: "text-embedding-004", 
-        taskType: TaskType.RETRIEVAL_DOCUMENT, 
-        maxConcurrency: 1,  // Forces LangChain to process embeddings sequentially
-        maxRetries: 3,      // Tells LangChain to retry instead of silently failing
-        // NEW: Disable safety filters for technical documentation
-        safetySettings: [
-            { category: HarmCategory.HARM_CATEGORY_HARASSMENT, threshold: HarmBlockThreshold.BLOCK_NONE },
-            { category: HarmCategory.HARM_CATEGORY_HATE_SPEECH, threshold: HarmBlockThreshold.BLOCK_NONE },
-            { category: HarmCategory.HARM_CATEGORY_SEXUALLY_EXPLICIT, threshold: HarmBlockThreshold.BLOCK_NONE },
-            { category: HarmCategory.HARM_CATEGORY_DANGEROUS_CONTENT, threshold: HarmBlockThreshold.BLOCK_NONE },
-        ]
-    });
-
-    // 5. Cloud Upsert (The magic happens here)
-    // 5. Cloud Upsert (With custom Batching to respect Gemini API Rate Limits)
-    console.log("📤 Translating to math and uploading to Pinecone in controlled batches...");
+    console.log("📤 Translating to math and validating before Pinecone upload...");
+    const validChunks = allSplitChunks.filter(c => c.pageContent.trim().length > 0);
     
-    // Connect a VectorStore to our index
-    const vectorStore = await PineconeStore.fromExistingIndex(embeddings, {
-        pineconeIndex,
-    });
-
-    // NEW: Defensive programming to strip empty chunks
-    const validChunks = splitChunks.filter(c => c.pageContent.trim().length > 0);
-
-    // We process the chunks 100 at a time to keep Gemini's servers happy
-    const batchSize = 10;
-    // const batchSize = 5;
+    const batchSize = 10; 
     
     for (let i = 0; i < validChunks.length; i += batchSize) {
         const batch = validChunks.slice(i, i + batchSize);
         console.log(`⏳ Processing batch ${Math.floor(i / batchSize) + 1} of ${Math.ceil(validChunks.length / batchSize)} (${batch.length} chunks)...`);
         
-        // Upload the current batch
-        await vectorStore.addDocuments(batch);
+        try {
+            const requests = batch.map(chunk => ({
+                content: { role: 'user', parts: [{ text: chunk.pageContent }] }
+            }));
+            
+            const response = await embedModel.batchEmbedContents({ requests });
+            const vectors = response.embeddings.map(e => e.values);
+
+            const pineconeRecords = [];
+            for (let j = 0; j < vectors.length; j++) {
+                if (!vectors[j]) {
+                    console.warn(`   ⚠️ Chunk ${i + j} returned undefined. Skipping.`);
+                    continue; 
+                }
+
+                const vector768 = vectors[j].slice(0, 768);
+
+                pineconeRecords.push({
+                    id: `chunk-${i + j}-${Date.now()}`, 
+                    values: vector768,         
+                    metadata: {                 
+                        pageContent: batch[j].pageContent,
+                        framework: batch[j].metadata.framework, 
+                        sourceUrl: batch[j].metadata.sourceUrl  
+                    }
+                });
+            }
+
+            if (pineconeRecords.length > 0) {
+                await pineconeIndex.upsert(pineconeRecords);
+                console.log(`   ✅ Upserted ${pineconeRecords.length} valid vectors.`);
+            }
+        } catch (err) {
+            console.error(`   ❌ RAW GEMINI API ERROR: ${err.message}`);
+        }
         
-        // If there are more batches left, pause for 3 seconds to let the API rate limit reset
         if (i + batchSize < validChunks.length) {
-            console.log("   -> Sleeping for 3 seconds to respect Gemini API limits...");
-            await new Promise(resolve => setTimeout(resolve, 3000));
+            await new Promise(resolve => setTimeout(resolve, 5000));
         }
     }
 
-    console.log(`\n✅ Success! ${splitChunks.length} document vectors are now live in your Pinecone database.`);
+    console.log(`\n✅ Success! Document vectors are now safely live in your Pinecone database.`);
 }
 
 buildKnowledgeBase();

@@ -59,7 +59,49 @@ async function scrapeSinglePage(url) {
     }
 }
 
+// Helper function to dynamically pull Next.js documentation URLs
+async function getNextJsUrls() {
+    console.log("🗺️ Fetching Next.js sitemap...");
+    
+    try {
+        const response = await fetch("https://nextjs.org/sitemap.xml");
+        const xml = await response.text();
+        
+        // Tell Cheerio to parse this as XML instead of HTML
+        const $ = cheerio.load(xml, { xmlMode: true });
+        const nextUrls = [];
+
+        // Loop through every <loc> tag in the sitemap
+        $('loc').each((i, el) => {
+            const url = $(el).text();
+            
+            // STRICT FILTER: Only grab actual documentation pages
+            if (url.startsWith("https://nextjs.org/docs")) {
+                nextUrls.push(url);
+            }
+        });
+
+        console.log(`✅ Found ${nextUrls.length} Next.js documentation pages in the sitemap.`);
+        
+        // 🛑 SAFETY CAP FOR TESTING: 
+        // Next.js has over 1,000 doc pages. Let's slice the array to just the first 20 for our initial test so we don't blow through API limits.
+        return nextUrls.slice(0, 20); 
+        
+    } catch (error) {
+        console.error("❌ Failed to fetch Next.js sitemap:", error.message);
+        return [];
+    }
+}
+
 async function buildKnowledgeBase() {
+
+    // TEMPORARY TEST
+    const nextLinks = await getNextJsUrls();
+    console.log(nextLinks);
+    return; // Stops the script here so it doesn't upload anything yet
+
+
+
     console.log(`\n🚀 Initiating Cloud Ingestion Pipeline for ${reactDocsUrls.length} pages...\n`);
     
     let massiveCombinedText = "";
